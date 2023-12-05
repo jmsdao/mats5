@@ -1,0 +1,13 @@
+name: mats
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.10
+  - cuda-toolkit=12.2  # Select a CUDA version compatible with your hardware
+  - pip
+  - pip:
+    - transformer-lens
