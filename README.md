@@ -20,12 +20,12 @@ exec bash
 git clone https://github.com/jmsdao/mats5.git && cd mats5
 ```
 
-```
+```bash
 # Install and activate env (fresh)
 mamba env create -f environment.yaml && mamba activate mats
 ```
 
-```
+```bash
 # Activate env from runpod workspace
 mamba activate /workspace/mamba-envs/mats
 ```
