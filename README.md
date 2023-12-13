@@ -1,4 +1,4 @@
-## Helpful RunPod Setup Commands
+## Handy Dandy Snippets
 ```bash
 # Install some linux tools
 apt-get update && \
@@ -28,4 +28,12 @@ mamba env create -f environment.yaml && mamba activate mats
 ```bash
 # Activate env from runpod workspace
 mamba activate /workspace/mamba-envs/mats
+```
+
+```python
+# Handy snippet to get repo root from anywhere in the repo
+import sys
+from subprocess import check_output
+ROOT = check_output('git rev-parse --show-toplevel', shell=True).decode("utf-8").strip()
+if ROOT not in sys.path: sys.path.append(ROOT)
 ```
