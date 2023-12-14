@@ -8,9 +8,9 @@ channels:
 dependencies:
   - python=3.10
   - pytest
-  # PyTorch and CUDA stuff
+  # CUDA stuff
   - cuda-toolkit=12.2  # Select a CUDA version compatible with your hardware
-  - pytorch-gpu>=2.1
+  # - pytorch-gpu>=2.1
   # Jupyter and plotting stuff
   - jupyter
   - ipykernel
@@ -21,5 +21,6 @@ dependencies:
   # Pip stuff
   - pip
   - pip:
-    - transformer-lens
+    # - transformer-lens
+    - git+https://github.com/Felhof/TransformerLens.git@support-mistral-7B
     - git+https://github.com/callummcdougall/CircuitsVis.git#subdirectory=python
