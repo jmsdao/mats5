@@ -6,7 +6,7 @@ from transformer_lens import HookedTransformer
 
 def load_model(use_runpod_cache=True, dtype=torch.float32, device="cpu"):
     cache_dir = "/workspace/cache/" if use_runpod_cache else None
-    weights_source = "NousResearch/Llama-2-7b-hf"
+    weights_source = "NousResearch/Llama-2-7b-chat-hf"
     tlens_arch = "Llama-2-7b-hf"
 
     # Load the hf model into CPU

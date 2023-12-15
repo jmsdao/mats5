@@ -1,2 +1,4 @@
 activations/*.pt
+representation-engineering/
+
 *__pycache__/*

@@ -8,6 +8,7 @@ channels:
 dependencies:
   - python=3.10
   - pytest
+  - sentencepiece  # for Llama's tokenizer
   # CUDA stuff
   - cuda-toolkit=12.2  # Select a CUDA version compatible with your hardware
   # - pytorch-gpu>=2.1
