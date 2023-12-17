@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pandas as pd
 import torch as t
@@ -16,21 +17,26 @@ class HookedMistral:
 
     def __call__(self, prompts, attention_mask=None):
         if isinstance(prompts, list) and isinstance(prompts[0], str):
-            tokens, mask = self.to_tokens(prompts, return_mask=True)
+            tokens, attention_mask = self.to_tokens(prompts, return_mask=True)
+            tokens = tokens.to(self.device)
+            attention_mask = attention_mask.to(self.device)
         else:
             tokens = prompts
-        out = self.hf_model(input_ids=tokens, attention_mask=mask)
+        out = self.hf_model(input_ids=tokens, attention_mask=attention_mask)
         return out.logits
 
-    def to_tokens(self, prompts: list[str], device=None, return_mask=False):
+    def to_tokens(self, prompts, device=None, return_mask=False):
         if device is None:
             device = self.device
         if isinstance(prompts, str):
             prompts = [prompts]
         tokens, attention_mask = self.tokenizer.batch_encode_plus(
-            prompts, padding=True, return_tensors="pt",
+            prompts,
+            padding=True,
+            return_tensors="pt",
         ).values()
         tokens = tokens.to(device)
+        attention_mask = attention_mask.to(device)
         if return_mask:
             return tokens, attention_mask
         return tokens
@@ -43,9 +49,8 @@ class HookedMistral:
         return strings
 
     def to_string_tokenized(self, tokens):
-        if (
-            isinstance(tokens, str)
-            or (isinstance(tokens, list) and isinstance(tokens[0], str))
+        if isinstance(tokens, str) or (
+            isinstance(tokens, list) and isinstance(tokens[0], str)
         ):
             tokens = self.to_tokens(tokens)[0]
         if isinstance(tokens, t.Tensor) and tokens.dim() == 1:
@@ -107,10 +112,11 @@ class HookedMistral:
     def run_with_cache(self, prompts, names):
         # Cache and cache hook setup
         cache = {}
+
         def cache_hook(module, input, output, name="unknown"):
-            if re.match("model\.layers\.\d+$", name):
+            if re.match(r"model\.layers\.\d+$", name):
                 output = output[0]
-            if re.match("model\.layers\.\d+\.self_attn$", name):
+            if re.match(r"model\.layers\.\d+\.self_attn$", name):
                 output = output[0]
             cache[name] = output
 
@@ -121,13 +127,13 @@ class HookedMistral:
             module = self.get_module(name)
             handles.append(module.register_forward_hook(hook_fnc))
         tokens, mask = self.to_tokens(prompts, return_mask=True)
-        out = self.hf_model(input_ids=tokens, attention_mask=mask)
+        out = self.__call__(tokens, attention_mask=mask)
 
         # Remove cache hooks
         for handle in handles:
             handle.remove()
 
-        return out.logits, cache
+        return out, cache
 
 
 def ntensor_to_long(
@@ -144,11 +150,11 @@ def ntensor_to_long(
     df[value_name] = tensor.flatten()
 
     for i, _ in enumerate(tensor.shape):
-        pattern = np.repeat(np.arange(tensor.shape[i]), np.prod(tensor.shape[i+1:]))
+        pattern = np.repeat(np.arange(tensor.shape[i]), np.prod(tensor.shape[i + 1 :]))
         n_repeats = int(np.prod(tensor.shape[:i]))
         df[f"dim{i}"] = np.tile(pattern, n_repeats)
 
     if dim_names is not None:
         df.columns = [value_name] + dim_names
-    
+
     return df
