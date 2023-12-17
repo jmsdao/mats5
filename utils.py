@@ -17,7 +17,7 @@ class HookedMistral:
 
     def __call__(self, prompts, attention_mask=None):
         tokens, attention_mask = self.to_tokens(prompts, return_mask=True)
-        with t.inference_mode():
+        with t.no_grad():
             out = self.hf_model(input_ids=tokens, attention_mask=attention_mask)
         return out.logits
 
@@ -139,7 +139,7 @@ class HookedMistral:
 
         # Get tokens and run a forward pass
         tokens, mask = self.to_tokens(prompts, return_mask=True)
-        with t.inference_mode():
+        with t.no_grad():
             out = self.__call__(tokens, attention_mask=mask)
 
         # Remove cache hooks
