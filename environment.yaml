@@ -24,7 +24,7 @@ dependencies:
   # Pip stuff
   - pip
   - pip:
-    - transformer-lens
-    # - git+https://github.com/Felhof/TransformerLens.git@support-mistral-7B
+    # - transformer-lens
+    - git+https://github.com/Felhof/TransformerLens.git@support-mistral-7B
     - git+https://github.com/callummcdougall/CircuitsVis.git#subdirectory=python
     - git+https://github.com/andyzoujm/representation-engineering.git
