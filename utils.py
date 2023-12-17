@@ -16,30 +16,40 @@ class HookedMistral:
         self.device = hf_model.device
 
     def __call__(self, prompts, attention_mask=None):
-        if isinstance(prompts, list) and isinstance(prompts[0], str):
-            tokens, attention_mask = self.to_tokens(prompts, return_mask=True)
-            tokens = tokens.to(self.device)
-            attention_mask = attention_mask.to(self.device)
-        else:
-            tokens = prompts
-        out = self.hf_model(input_ids=tokens, attention_mask=attention_mask)
+        tokens, attention_mask = self.to_tokens(prompts, return_mask=True)
+        with t.inference_mode():
+            out = self.hf_model(input_ids=tokens, attention_mask=attention_mask)
         return out.logits
 
     def to_tokens(self, prompts, device=None, return_mask=False):
         if device is None:
             device = self.device
+        # Convert string to list
         if isinstance(prompts, str):
             prompts = [prompts]
-        tokens, attention_mask = self.tokenizer.batch_encode_plus(
-            prompts,
-            padding=True,
-            return_tensors="pt",
-        ).values()
-        tokens = tokens.to(device)
-        attention_mask = attention_mask.to(device)
-        if return_mask:
-            return tokens, attention_mask
-        return tokens
+        # If the input is a list of strings
+        if isinstance(prompts, list) and isinstance(prompts[0], str):
+            tokens, attention_mask = self.tokenizer.batch_encode_plus(
+                prompts,
+                padding=True,
+                return_tensors="pt",
+            ).values()
+            tokens = tokens.to(device)
+            attention_mask = attention_mask.to(device)
+            if return_mask:
+                return tokens, attention_mask
+            return tokens
+        # If the input is a tensor
+        elif isinstance(prompts, t.Tensor):
+            if prompts.dim() == 1:
+                prompts = prompts.unsqueeze(0)
+            tokens = prompts.to(device)
+            if return_mask:
+                mask = t.ones_like(tokens).to(device)
+                return tokens, mask
+            return tokens
+        else:
+            raise ValueError("Invalid input type")
 
     def to_string(self, tokens):
         if isinstance(tokens, t.Tensor) and tokens.dim() == 1:
@@ -126,8 +136,11 @@ class HookedMistral:
             hook_fnc = partial(cache_hook, name=name)
             module = self.get_module(name)
             handles.append(module.register_forward_hook(hook_fnc))
+
+        # Get tokens and run a forward pass
         tokens, mask = self.to_tokens(prompts, return_mask=True)
-        out = self.__call__(tokens, attention_mask=mask)
+        with t.inference_mode():
+            out = self.__call__(tokens, attention_mask=mask)
 
         # Remove cache hooks
         for handle in handles:

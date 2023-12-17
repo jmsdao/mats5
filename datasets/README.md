@@ -1,1 +1,4 @@
-`cities.csv`: shamelessly yoinked from [saprmakrs](https://github.com/saprmarks/geometry-of-truth/blob/91b223224699754efe83bbd3cae04d434dda0760/datasets/cities.csv)
+- Shamelessly yoinked from [saprmakrs](https://github.com/saprmarks/geometry-of-truth/tree/a65a07fe38f27cbb4cc6f472b957fb3e53ef9f6d/datasets):
+  - `cities.csv`
+- Shamelessly yoinked from [andyzou](https://github.com/andyzoujm/representation-engineering/tree/acd14ab15f6d37710dd9a3b47caa2900ce5c2569/data/facts):
+  - `facts_true_false.csv`
