@@ -120,21 +120,37 @@ class HookedMistral:
             module._forward_hooks.clear()
 
     def run_with_cache(self, prompts, names):
-        # Cache and cache hook setup
+        # Cache init and cache hook setup
         cache = {}
 
         def cache_hook(module, input, output, name="unknown"):
+            # Preprocess tensor to send to cache
             if re.match(r"model\.layers\.\d+$", name):
                 output = output[0]
-            if re.match(r"model\.layers\.\d+\.self_attn$", name):
+            elif re.match(r"model\.layers\.\d+\.self_attn$", name):
                 output = output[0]
+            elif name == "final_rscale":  # rscale is the reciprocal of the scale
+                hidden_states = input[0]
+                hidden_states = hidden_states.to(t.float32)
+                variance = hidden_states.pow(2).mean(-1, keepdim=True)
+                output = t.rsqrt(variance + module.variance_epsilon)
+
+            # Place in cache
             cache[name] = output
 
         # Add hooks and forward pass
         handles = []
         for name in names:
-            hook_fnc = partial(cache_hook, name=name)
-            module = self.get_module(name)
+            # Select which cache hook conditional to run and change module name
+            cache_hook_name = name
+            module_name = name
+            if name == "final_rscale":
+                cache_hook_name = "final_rscale"
+                module_name = "model.norm"
+            
+            # Add the hook
+            hook_fnc = partial(cache_hook, name=cache_hook_name)
+            module = self.get_module(module_name)
             handles.append(module.register_forward_hook(hook_fnc))
 
         # Get tokens and run a forward pass
